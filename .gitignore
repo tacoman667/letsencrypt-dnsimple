@@ -1,2 +1,5 @@
+.DS_Store
 .env
 *.pem
+run.sh
+certs/

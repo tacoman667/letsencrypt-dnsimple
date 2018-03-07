@@ -13,6 +13,7 @@ GEM
     bindata (2.1.0)
     dnsimple (2.1.1)
       httparty
+    dotenv (2.2.1)
     faraday (0.9.2)
       multipart-post (>= 1.2, < 3)
     httparty (0.13.7)
@@ -42,6 +43,10 @@ PLATFORMS
 DEPENDENCIES
   acme-client
   dnsimple
+  dotenv
+
+RUBY VERSION
+   ruby 2.3.1p112
 
 BUNDLED WITH
-   1.11.2
+   1.16.0

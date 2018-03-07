@@ -3,11 +3,35 @@ require "shellwords"
 
 require "dnsimple"
 require "acme/client"
+require "dotenv"
 
-DEFAULT_LETSENCRYPT_ENDPOINT = "https://acme-v01.api.letsencrypt.org/"
+Dotenv.load
+
+cert_file_path = ''
+is_staging = false
+
+while not ARGV.empty?
+  if ARGV.first.start_with?("-")
+    case ARGV.shift  # shift takes the first argument and removes it from the array
+    when '--staging', '-s'
+      DEFAULT_LETSENCRYPT_ENDPOINT = "https://acme-staging.api.letsencrypt.org/directory"
+      is_staging = true
+    when '--path', '-p'
+      cert_file_path = ARGV.shift
+      cert_file_path = "#{cert_file_path}/" unless cert_file_path.empty? or cert_file_path[-1] == '/'
+    end
+  end
+end
+
+cert_file_path = "#{cert_file_path}staging/" if is_staging
+
+DEFAULT_LETSENCRYPT_ENDPOINT ||= "https://acme-v01.api.letsencrypt.org/"
 LETSENCRYPT_NAME = "_acme-challenge" # paranoid, don't use value from acme client
 LETSENCRYPT_NAME_TYPE = "TXT" # paranoid, don't use value from acme client
 DNSIMPLE_TTL = 60
+
+
+puts "Using #{DEFAULT_LETSENCRYPT_ENDPOINT}"
 
 raw_names = ENV.fetch("NAMES").split(",")
 authorize_names = raw_names.inject({}) {|h, rn| n = rn.sub("/", "."); d = rn.split("/", 2).last; h.update(n => d) }
@@ -18,7 +42,7 @@ domains = authorize_names.values.uniq.inject({}) {|h, d| h.update(d => dnsimple.
 private_key = OpenSSL::PKey::RSA.new(2048)
 acme = Acme::Client.new(private_key: private_key, endpoint: ENV.fetch("LETSENCRYPT_ENDPOINT", DEFAULT_LETSENCRYPT_ENDPOINT))
 
-registration = acme.register(contact: ENV.fetch("ACME_CONTACT"))
+registration = acme.register(contact: "mailto:#{ENV.fetch("ACME_CONTACT")}")
 registration.agree_terms
 
 authorize_names.each do |authorize_name, authorize_domain_name|
@@ -84,14 +108,21 @@ authorize_names.each do |authorize_name, authorize_domain_name|
   end
 end
 
-filename_base = authorize_names.keys.sort.join("_")
+filename_base = domains.keys.first # authorize_names.keys.sort.join("_")
 
 csr = Acme::Client::CertificateRequest.new(names: authorize_names.keys)
 
 puts "requesting certificate"
 certificate = acme.new_certificate(csr)
 
-File.write("#{filename_base}-key.pem", certificate.request.private_key.to_pem)
-File.write("#{filename_base}-cert.pem", certificate.to_pem)
-File.write("#{filename_base}-chain.pem", certificate.chain_to_pem)
-File.write("#{filename_base}-fullchain.pem", certificate.fullchain_to_pem)
+# make the directory unless it alredy exists or was not defined in args
+Dir.mkdir cert_file_path unless cert_file_path.empty? or Dir.exist?(cert_file_path)
+
+puts "Writing certificates to #{Dir.pwd}/#{cert_file_path}"
+
+File.write("#{cert_file_path}#{filename_base}-privkey.pem", certificate.request.private_key.to_pem)
+File.write("#{cert_file_path}#{filename_base}-cert.pem", certificate.to_pem)
+File.write("#{cert_file_path}#{filename_base}-chain.pem", certificate.chain_to_pem)
+File.write("#{cert_file_path}#{filename_base}-fullchain.pem", certificate.fullchain_to_pem)
+
+puts "Done writing certificates"
