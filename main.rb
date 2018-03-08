@@ -39,6 +39,8 @@ authorize_names = raw_names.inject({}) {|h, rn| n = rn.sub("/", "."); d = rn.spl
 dnsimple = Dnsimple::Client.new(username: ENV.fetch("DNSIMPLE_API_USER"), api_token: ENV.fetch("DNSIMPLE_API_TOKEN"))
 domains = authorize_names.values.uniq.inject({}) {|h, d| h.update(d => dnsimple.domains.domain(d)) }
 
+domain_name = domains.keys.first
+
 private_key = OpenSSL::PKey::RSA.new(2048)
 acme = Acme::Client.new(private_key: private_key, endpoint: ENV.fetch("LETSENCRYPT_ENDPOINT", DEFAULT_LETSENCRYPT_ENDPOINT))
 
@@ -108,7 +110,7 @@ authorize_names.each do |authorize_name, authorize_domain_name|
   end
 end
 
-filename_base = domains.keys.first # authorize_names.keys.sort.join("_")
+filename_base = domain_name # authorize_names.keys.sort.join("_")
 
 csr = Acme::Client::CertificateRequest.new(names: authorize_names.keys)
 
