@@ -25,7 +25,7 @@ end
 
 cert_file_path = "#{cert_file_path}staging/" if is_staging
 
-DEFAULT_LETSENCRYPT_ENDPOINT ||= "https://acme-v01.api.letsencrypt.org/directory"
+DEFAULT_LETSENCRYPT_ENDPOINT ||= "https://acme-v02.api.letsencrypt.org/directory"
 DNSIMPLE_TTL = 60
 
 puts "Using #{DEFAULT_LETSENCRYPT_ENDPOINT}"
