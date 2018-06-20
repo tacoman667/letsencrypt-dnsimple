@@ -33,7 +33,6 @@ puts "Using #{DEFAULT_LETSENCRYPT_ENDPOINT}"
 raw_names = ENV.fetch("NAMES").split(",")
 authorize_names = raw_names.inject({}) {|h, rn| n = rn.sub("/", "."); d = rn.split("/", 2).last; h.update(n => d) }
 
-# dnsimple = Dnsimple::Client.new(username: ENV.fetch("DNSIMPLE_API_USER"), api_token: ENV.fetch("DNSIMPLE_API_TOKEN"))
 dnsimple = Dnsimple::Client.new(access_token: ENV.fetch("DNSIMPLE_ACCESS_TOKEN"))
 dnsimple_account_id = dnsimple.identity.whoami.data.account.id
 
