@@ -2,27 +2,26 @@
 
 Quick hack to use the letsencrypt [DNS challenge](https://letsencrypt.github.io/acme-spec/#rfc.section.7.4) with dnsimple.
 
+Now using dnsimple api v2.
+
 ## Running with installed ruby
 
-Requires ruby 2.3.0.
+Requires ruby 2.4.
 
 ```bash
 $ gem install bundler
 $ bundle install
-$ DNSIMPLE_API_USER=you@foo.org \
-  DNSIMPLE_API_TOKEN=... \
+$ DNSIMPLE_ACCESS_TOKEN=... \
   NAMES=foo.org,www/foo.org \
   ACME_CONTACT=mailto:you@foo.org \
   bundle exec ruby main.rb
 ```
 
-`.pem` files will be written to files named after the value of `NAMES`, with the above config they would match `foo.org_www.foo.org-*`:
+`.pem` files will be written to files named after the value of `NAMES`:
 
 ```
-foo.org_www.foo.org-cert.pem
-foo.org_www.foo.org-chain.pem
-foo.org_www.foo.org-fullchain.pem
-foo.org_www.foo.org-key.pem
+foo.org-fullchain.pem
+foo.org-privkey.pem
 ```
 
 ## Running with Docker
@@ -33,7 +32,7 @@ Check out https://github.com/meskyanichi/dockerized-letsencrypt-dnsimple which w
 
 Comes from the environment.
 
-* `DNSIMPLE_API_USER` and `DNSIMPLE_API_TOKEN`: get these from https://dnsimple.com/user
-* `NAMES`: a `,`-separated list of names that will be in the requested cert. Use `/` instead of `.` to denote the separation between subdomain and dnsimple domain. For example, to request a cert for `www.danp.net`, where `danp.net` is the domain dnsimple knows about, you'd use `www/danp.net`.
+* `DNSIMPLE_ACCESS_TOKEN`: get this access token from https://dnsimple.com/user
+* `NAMES`: a `,`-separated list of names that will be in the requested cert. Use `/` instead of `.` to denote the separation between subdomain and dnsimple domain. For example, to request a cert for `www.example.net`, where `example.net` is the domain dnsimple knows about, you'd use `www/example.net`.
 * `ACME_CONTACT`: the contact to use for [registration](https://letsencrypt.github.io/acme-spec/#rfc.section.6.3)
 * `LETSENCRYPT_ENDPOINT`: optional, defaults to the production endpoint at `https://acme-v01.api.letsencrypt.org/`
