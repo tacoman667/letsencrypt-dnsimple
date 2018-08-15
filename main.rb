@@ -49,8 +49,6 @@ order = client.new_order(identifiers: identifiers)
 order.authorizations.each do |authorization|
   dns_challenge = authorization.dns
 
-  puts dns_challenge.to_h
-
   # dns_challenge.record_name # => '_acme-challenge'
   # dns_challenge.record_type # => 'TXT'
   # dns_challenge.record_content # => 'HRV3PS5sRDyV-ous4HJk4z24s5JjmUTjcCaUjFt28-8'
