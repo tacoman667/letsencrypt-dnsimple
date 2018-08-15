@@ -39,11 +39,17 @@ dnsimple_account_id = dnsimple.identity.whoami.data.account.id
 private_key = OpenSSL::PKey::RSA.new(4096)
 client = Acme::Client.new(private_key: private_key, directory: ENV.fetch("LETSENCRYPT_ENDPOINT", DEFAULT_LETSENCRYPT_ENDPOINT))
 account = client.new_account(contact: "mailto:#{ENV.fetch("ACME_CONTACT")}", terms_of_service_agreed: true)
+puts "Account KID: #{account.kid}"
 
-order = client.new_order(identifiers: authorize_names.collect { |k,v| k })
+
+identifiers = authorize_names.collect { |k,v| k }
+puts "identifiers: #{identifiers}"
+order = client.new_order(identifiers: identifiers)
 
 order.authorizations.each do |authorization|
   dns_challenge = authorization.dns
+
+  puts dns_challenge.to_h
 
   # dns_challenge.record_name # => '_acme-challenge'
   # dns_challenge.record_type # => 'TXT'
@@ -76,9 +82,11 @@ order.authorizations.each do |authorization|
 
   puts "waiting for record to be at dnsimple servers"
   loop do
-    system("dig @ns1.dnsimple.com #{Shellwords.escape(letsencrypt_authorize_name)} txt | grep -e #{Shellwords.escape(dns_challenge.record_content)}")
+    command = "dig @ns1.dnsimple.com #{Shellwords.escape(letsencrypt_authorize_name)} txt | grep -e #{Shellwords.escape(dns_challenge.record_content)}"
+    # puts command
+    system(command)
     break if $?.success?
-    sleep 5
+    sleep 30
   end
 
   dns_challenge.request_validation
@@ -87,6 +95,9 @@ order.authorizations.each do |authorization|
     dns_challenge.reload
   end
 
+  puts "Validation complete: #{dns_challenge.status}"
+  puts "Validation errors: #{dns_challenge.error}"
+
   # cleanup dns
   dnsimple.zones.delete_record(dnsimple_account_id, authorize_names.values.first, new_record.data.id)
 end
@@ -94,7 +105,7 @@ end
 filename_base = authorize_names.values.first
 
 private_key_for_csr = OpenSSL::PKey::RSA.new(4096)
-csr = Acme::Client::CertificateRequest.new(names: authorize_names.keys)
+csr = Acme::Client::CertificateRequest.new(private_key: private_key_for_csr, names: authorize_names.keys)
 
 order.finalize(csr: csr)
 sleep(1) while order.status == 'processing'

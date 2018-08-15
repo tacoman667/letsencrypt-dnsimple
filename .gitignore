@@ -3,3 +3,4 @@
 *.pem
 run.sh
 certs/
+nginx.conf
